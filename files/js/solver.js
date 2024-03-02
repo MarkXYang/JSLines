@@ -1,26 +1,54 @@
+class Sameballs {
+    constructor(start, count) {
+        this.start = start; // Start position of continuous same color balls
+        this.count = count; // How many same color balls
+    }
+    isfive() {
+        return (this.count >= 5) ? true : false;
+    }
+    reset(start) {
+        this.start = start;
+        this.count = 0;
+    }
+    copyIfMoreThan(theone) {
+        if(this.count < theone.count) {
+            this.count = theone.count;
+            this.start = theone.start;
+        }
+    }
+}
+
 class Solver { 
     constructor(grid) {
         this.grid = grid;
         this.score = 0;
     }
 
-    isVerticalLine(x, y) {
-        var result = true;
-        for(var i = 0; i < 5; i++) {
-            if(typeof(this.grid.data[y + i][x]) !== "number") {
-                if(!(this.grid.data[y + i][x].equalColour(this.grid.data[y][x]))) {
-                    result = false;
+    isVerticalLine(x) {
+        var sameballs = new Sameballs(0, 0);
+        var max_sameballs = new Sameballs(0, 0);
+        for(var i = 1; i < this.grid.size; i++) {
+            if(typeof(this.grid.data[i][x]) !== "number") {
+                if(((this.grid.data[i][x]).equalColour(this.grid.data[i-1][x]))) {
+                    sameballs.count += 1;
+                } else {
+                    max_sameballs.copyIfMoreThan(sameballs);
+                    sameballs.reset(i);
                 }
             } else {
-                result = false;
+                max_sameballs.copyIfMoreThan(sameballs);
+                sameballs.reset(i);
             }
-            
         }
-        return result;
+        max_sameballs.copyIfMoreThan(sameballs);
+
+        // The real count is 1 more
+        max_sameballs.count++;
+        return max_sameballs;
     }
 
-    clearVertical(x, y) {
-        for(var i = 0; i < 5; i++) {
+    clearVertical(x, y, num) {
+        for(var i = 0; i < num; i++) {
             this.grid.data[y + i][x] = 0;
         }
     }
@@ -28,12 +56,12 @@ class Solver {
     checkVerticalLines() {
         var result = false;
         for(var x = 0; x < this.grid.size; x++) {
-            for(var y = 0; y < 5; y++) {
-                if(this.isVerticalLine(x, y)) {
-                    this.clearVertical(x, y);
-                    Utils.increaseScore(this.score);
-                    result = true;
-                }
+            var max = this.isVerticalLine(x);
+
+            if(max.isfive()) {
+                this.clearVertical(x, max.start, max.count);
+                Utils.increaseScore(max.count);
+                result = true;
             }
         }
         return result;
