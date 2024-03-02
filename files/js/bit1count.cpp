@@ -5,10 +5,11 @@ std::pair<int, int> countMaxContinuousBit1(uint32_t num);
 
 std::pair<int, int> countMaxContinuousBit1(uint32_t num) {
     int count = 0;
+    int times_shift = 0;
     int maxCount = 0;
     int startBit = -1;
     int maxStartBit = -1;
-    int tailZero = __builtin_ctz(num);
+
 
     while (num > 0) {
         if (num & 1) {
@@ -18,16 +19,17 @@ std::pair<int, int> countMaxContinuousBit1(uint32_t num) {
             }
             if (count > maxCount) {
                 maxCount = count;
-                maxStartBit = startBit;
+                maxStartBit = times_shift;
             }
         } else {
             count = 0;
             startBit = -1;
         }
         num >>= 1;
+        ++times_shift;
     }
 
-    return std::make_pair(maxCount, maxStartBit+tailZero);
+    return std::make_pair(maxCount, maxStartBit);
 }
 
 int main()
