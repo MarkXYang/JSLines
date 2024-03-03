@@ -67,22 +67,32 @@ class Solver {
         return result;
     }
 
-    isHorizontalLine(x, y) {
-        var result = true;
-        for(var i = 0; i < 5; i++) {
-            if(typeof(this.grid.data[y][x + i]) !== "number"){ 
-                if(!(this.grid.data[y][x + i].equalColour(this.grid.data[y][x]))) {
-                    result = false;
+    isHorizontalLine(y) {
+        var sameballs = new Sameballs(0, 0);
+        var max_sameballs = new Sameballs(0, 0);
+        for(var i = 1; i < this.grid.size; i++) {
+            if(typeof(this.grid.data[y][i]) !== "number") {
+                if(((this.grid.data[y][i]).equalColour(this.grid.data[y][i-1]))) {
+                    sameballs.count += 1;
+                } else {
+                    max_sameballs.copyIfMoreThan(sameballs);
+                    sameballs.reset(i);
                 }
             } else {
-                result = false;
+                max_sameballs.copyIfMoreThan(sameballs);
+                sameballs.reset(i);
             }
         }
-        return result;
+        max_sameballs.copyIfMoreThan(sameballs);
+
+        // The real count is 1 more
+        max_sameballs.count++;
+
+        return max_sameballs;
     }
 
-    clearHorizontal(x, y) {
-        for(var i = 0; i < 5; i++) {
+    clearHorizontal(x, y, num) {
+        for(var i = 0; i < num; i++) {
             this.grid.data[y][x + i] = 0;
         }
     }
@@ -90,12 +100,11 @@ class Solver {
     checkHorizontalLines() {
         var result = false;
         for(var y = 0; y < this.grid.size; y++) {
-            for(var x = 0; x < 5; x++) {
-                if(this.isHorizontalLine(x, y)) {
-                    this.clearHorizontal(x, y);
-                    Utils.increaseScore(this.score);
-                    result = true;
-                }
+            var max = this.isHorizontalLine(y);
+            if(max.isfive()) {
+                this.clearHorizontal(max.start, y, max.count);
+                Utils.increaseScore(max.count);
+                result = true;
             }
         }
         return result;
