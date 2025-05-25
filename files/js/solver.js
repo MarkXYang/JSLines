@@ -1,250 +1,385 @@
-// For the continuous same color balls series
+/**
+ * Represents a sequence of continuous same-colored balls.
+ * This class is used by the Solver to track potential lines.
+ */
 class ContinuousColorBalls {
+    /**
+     * Creates a new ContinuousColorBalls instance.
+     * @param {number} x - The starting x-coordinate (column index) of the sequence.
+     * @param {number} y - The starting y-coordinate (row index) of the sequence.
+     * @param {number} count - The number of same-colored balls in the sequence.
+     */
     constructor(x, y, count) {
-        this.x = x; // Start position of continuous same color balls
-        this.y = y; // Start position of continuous same color balls
-        this.count = count; // How many same color balls
+        /** @type {number} */
+        this.x = x;
+        /** @type {number} */
+        this.y = y;
+        /** @type {number} */
+        this.count = count;
     }
-    isfive() {
-        return (this.count >= 5) ? true : false;
+
+    /**
+     * Checks if the sequence contains 5 or more balls (meaning it forms a line).
+     * @returns {boolean} True if the count is 5 or more, false otherwise.
+     */
+    isFiveOrMore() { // Renamed from isfive for clarity
+        return this.count >= 5;
     }
+
+    /**
+     * Resets the sequence with a new starting position and count.
+     * Typically used when a sequence is broken or a new one starts.
+     * @param {number} x - The new starting x-coordinate.
+     * @param {number} y - The new starting y-coordinate.
+     */
     reset(x, y) {
         this.x = x;
         this.y = y;
-        this.count = 0;
+        this.count = 0; // Reset count to 0, as it usually means the current ball is different or empty
     }
-    updateIfGreater(theone) {
-        if(this.count < theone.count) {
-            this.count = theone.count;
-            this.x = theone.x;
-            this.y = theone.y;
+
+    /**
+     * Updates this sequence if another sequence (`otherSequence`) is longer.
+     * This is used to keep track of the longest sequence found so far.
+     * @param {ContinuousColorBalls} otherSequence - The other sequence to compare with.
+     */
+    updateIfGreater(otherSequence) {
+        if (this.count < otherSequence.count) {
+            this.count = otherSequence.count;
+            this.x = otherSequence.x;
+            this.y = otherSequence.y;
         }
     }
 }
 
-class Solver { 
+/**
+ * Handles the logic for detecting and clearing lines of balls in the grid.
+ */
+class Solver {
+    /**
+     * Creates a new Solver instance.
+     * @param {Grid} grid - The game grid to operate on.
+     */
     constructor(grid) {
+        /** @type {Grid} */
         this.grid = grid;
-        this.score = 0;
+        /**
+         * The current score achieved by clearing lines.
+         * @type {number}
+         */
+        this.score = 0; // This score property seems local to solver, game might have its own score.
     }
 
-    isVerticalLine(x) {
-        var curContBalls = new ContinuousColorBalls(x, 0, 0);
-        var maxContBalls = new ContinuousColorBalls(x, 0, 0);
-        for(var i = 1; i < this.grid.size; i++) {
-            if(typeof(this.grid.data[i][x]) !== "number") {
-                if(((this.grid.data[i][x]).equalColour(this.grid.data[i-1][x]))) {
-                    curContBalls.count += 1;
+    /**
+     * Checks for the longest vertical line of same-colored balls in a given column.
+     * @param {number} columnIndex - The column index to check.
+     * @returns {ContinuousColorBalls} An object representing the longest continuous sequence found.
+     *                                 The count is initialized to 1 if any ball is found, as a single ball is a sequence of 1.
+     */
+    findLongestVerticalSequence(columnIndex) {
+        let currentSequence = new ContinuousColorBalls(columnIndex, 0, 0);
+        let maxSequence = new ContinuousColorBalls(columnIndex, 0, 0);
+
+        for (let rowIndex = 0; rowIndex < this.grid.size; rowIndex++) {
+            const currentCell = this.grid.data[rowIndex][columnIndex];
+            if (typeof currentCell === "object") { // Cell contains a ball
+                if (currentSequence.count === 0) { // Start of a new potential sequence
+                    currentSequence.reset(columnIndex, rowIndex);
+                    currentSequence.count = 1;
                 } else {
-                    maxContBalls.updateIfGreater(curContBalls);
-                    curContBalls.reset(x, i);
-                }
-            } else {
-                maxContBalls.updateIfGreater(curContBalls);
-                curContBalls.reset(x, i);
-            }
-        }
-        maxContBalls.updateIfGreater(curContBalls);
-
-        // The real count is 1 more
-        maxContBalls.count++;
-        return maxContBalls;
-    }
-
-    clearVertical(listBall) {
-        for(var i = 0; i < listBall.count; i++) {
-            //console.log("x:", listBall.x, ", y:", listBall.y+i, ", count:", listBall.count);
-            this.grid.data[listBall.y + i][listBall.x] = 0;
-        }
-    }
-
-    checkVerticalLines() {
-        var result = false;
-        for(var x = 0; x < this.grid.size; x++) {
-            var line = this.isVerticalLine(x);
-
-            if(line.isfive()) {
-                this.clearVertical(line);
-                Utils.increaseScore(line.count);
-                this.score += line.count;
-                result = true;
-            }
-        }
-        return result;
-    }
-
-    isHorizontalLine(y) {
-        var curContBalls = new ContinuousColorBalls(0, y, 0);
-        var maxContBalls = new ContinuousColorBalls(0, y, 0);
-        for(var i = 1; i < this.grid.size; i++) {
-            if(typeof(this.grid.data[y][i]) !== "number") {
-                if(((this.grid.data[y][i]).equalColour(this.grid.data[y][i-1]))) {
-                    curContBalls.count += 1;
-                } else {
-                    maxContBalls.updateIfGreater(curContBalls);
-                    curContBalls.reset(i, y);
-                }
-            } else {
-                maxContBalls.updateIfGreater(curContBalls);
-                curContBalls.reset(i, y);
-            }
-        }
-        maxContBalls.updateIfGreater(curContBalls);
-
-        // The real count is 1 more
-        maxContBalls.count++;
-
-        return maxContBalls;
-    }
-
-    clearHorizontal(listBall) {
-        console.log(listBall);
-        for(var i = 0; i < listBall.count; i++) {
-            this.grid.data[listBall.y][listBall.x + i] = 0;
-        }
-    }
-
-    checkHorizontalLines() {
-        var result = false;
-        for(var y = 0; y < this.grid.size; y++) {
-            var line = this.isHorizontalLine(y);
-            if(line.isfive()) {
-                console.log(line);
-                this.clearHorizontal(line);
-                Utils.increaseScore(line.count);
-                this.score += line.count;
-                result = true;
-            }
-        }
-        return result;
-    }
-    
-
-    isDiagonalLeftLine(x, y) {
-        var curContBalls = new ContinuousColorBalls(x, y, 0);
-        var maxContBalls = new ContinuousColorBalls(x, y, 0);
-
-        var min_length = Math.min(x+1, this.grid.size - y);
-        //console.log("x:", x, ", y:", y, ", len:", min_length);
-        for(var i = 0; i < min_length; i++) {
-            if(typeof(this.grid.data[y + i][x - i]) !== "number") {
-                if(i === 0) {
-                    curContBalls.count = 1;
-                } else {
-                    if((this.grid.data[y + i][x - i].equalColour(this.grid.data[y+i-1][x-i+1]))) {
-                        curContBalls.count += 1;
-                        //console.log("i=", i);
-                    } else {
-                        maxContBalls.updateIfGreater(curContBalls);
-                        curContBalls.reset(x-i, y+i);
-                        curContBalls.count = 1;
+                    const previousCell = this.grid.data[rowIndex - 1][columnIndex];
+                    if (typeof previousCell === "object" && currentCell.equalColour(previousCell)) {
+                        currentSequence.count++;
+                    } else { // Sequence broken
+                        maxSequence.updateIfGreater(currentSequence);
+                        currentSequence.reset(columnIndex, rowIndex);
+                        currentSequence.count = 1;
                     }
                 }
-            } else {
-                maxContBalls.updateIfGreater(curContBalls);
-                curContBalls.reset(x-i, y+i);
+            } else { // Cell is empty, sequence broken
+                maxSequence.updateIfGreater(currentSequence);
+                currentSequence.reset(columnIndex, rowIndex); // Reset with current empty cell's coords, count remains 0
             }
         }
-        maxContBalls.updateIfGreater(curContBalls);
-
-        return maxContBalls;
+        maxSequence.updateIfGreater(currentSequence); // Final check for the last sequence
+        return maxSequence;
     }
 
-    clearDiagonalLeftLine(diagonLine) {
-        //console.log("clearDiagonalLeftLine", diagonLine);
-        for(var i = 0; i < diagonLine.count; i++) {
-            this.grid.data[diagonLine.y + i][diagonLine.x - i] = 0;
+    /**
+     * Clears a vertical line of balls from the grid.
+     * @param {ContinuousColorBalls} lineInfo - Information about the line to clear.
+     */
+    clearVerticalLine(lineInfo) {
+        for (let i = 0; i < lineInfo.count; i++) {
+            this.grid.data[lineInfo.y + i][lineInfo.x] = 0; // Set cell to empty
         }
     }
 
-    checkDiagonalLeftLines() {
-        var result = false;
-        // y=0, scan x from 4 to the max of x
-        for(var x = 4; x < this.grid.size; x++) {
-            var line_y0 = this.isDiagonalLeftLine(x, 0);
-            //console.log("line_y0:", line_y0);
-            if(line_y0.isfive()) {
-                //console.log("line_y0:", line_y0);
-                this.clearDiagonalLeftLine(line_y0);
-                Utils.increaseScore(line_y0.count);
-                this.score += line_y0.count;
-                result = true;
+    /**
+     * Checks all columns for vertical lines and clears them if found.
+     * @returns {boolean} True if any vertical line was found and cleared, false otherwise.
+     */
+    checkAndClearVerticalLines() {
+        let lineFound = false;
+        for (let colIndex = 0; colIndex < this.grid.size; colIndex++) {
+            const longestLine = this.findLongestVerticalSequence(colIndex);
+            if (longestLine.isFiveOrMore()) {
+                this.clearVerticalLine(longestLine);
+                Utils.increaseScore(longestLine.count);
+                this.score += longestLine.count;
+                lineFound = true;
             }
         }
-
-        // x=grid.size-1, scan y from 0 to grid.size - 4
-        for(var y = 0; y < this.grid.size - 4; y++) {
-            var line_x = this.isDiagonalLeftLine(this.grid.size-1, y);
-            if(line_x.isfive()) {
-                //console.log("line_x:",line_x);
-                this.clearDiagonalLeftLine(line_x);
-                Utils.increaseScore(line_x.count);
-                this.score += line_x.count;
-                result = true;
-            }
-        }
-        return result;
+        return lineFound;
     }
 
-    isDiagonalRightLine(x, y, len) {
-        var curContBalls = new ContinuousColorBalls(x, y, 0);
-        var maxContBalls = new ContinuousColorBalls(x, y, 0);
+    /**
+     * Checks for the longest horizontal line of same-colored balls in a given row.
+     * @param {number} rowIndex - The row index to check.
+     * @returns {ContinuousColorBalls} An object representing the longest continuous sequence found.
+     */
+    findLongestHorizontalSequence(rowIndex) {
+        let currentSequence = new ContinuousColorBalls(0, rowIndex, 0);
+        let maxSequence = new ContinuousColorBalls(0, rowIndex, 0);
 
-        for(var i = 0; i < len; i++) {
-            if(typeof(this.grid.data[y + i][x + i]) !== "number") {
-                if(i === 0) {
-                    curContBalls.count = 1;
+        for (let colIndex = 0; colIndex < this.grid.size; colIndex++) {
+            const currentCell = this.grid.data[rowIndex][colIndex];
+            if (typeof currentCell === "object") { // Cell contains a ball
+                if (currentSequence.count === 0) { // Start of a new potential sequence
+                    currentSequence.reset(colIndex, rowIndex);
+                    currentSequence.count = 1;
                 } else {
-                    if((this.grid.data[y + i][x + i].equalColour(this.grid.data[y+i-1][x+i-1]))) {
-                        curContBalls.count += 1;
-                    } else {
-                        maxContBalls.updateIfGreater(curContBalls);
-                        curContBalls.reset(x+i, y+i);
-                        curContBalls.count = 1;
+                    const previousCell = this.grid.data[rowIndex][colIndex - 1];
+                    if (typeof previousCell === "object" && currentCell.equalColour(previousCell)) {
+                        currentSequence.count++;
+                    } else { // Sequence broken
+                        maxSequence.updateIfGreater(currentSequence);
+                        currentSequence.reset(colIndex, rowIndex);
+                        currentSequence.count = 1;
                     }
                 }
-            } else {
-                maxContBalls.updateIfGreater(curContBalls);
-                curContBalls.reset(x+i, y+i);
+            } else { // Cell is empty
+                maxSequence.updateIfGreater(currentSequence);
+                currentSequence.reset(colIndex, rowIndex);
             }
         }
-        maxContBalls.updateIfGreater(curContBalls);
-
-        return maxContBalls;
+        maxSequence.updateIfGreater(currentSequence);
+        return maxSequence;
     }
 
-    clearDiagonalRightLine(diagonLine) {
-        for(var i = 0; i < diagonLine.count; i++) {
-            this.grid.data[diagonLine.y + i][diagonLine.x + i] = 0;
+    /**
+     * Clears a horizontal line of balls from the grid.
+     * @param {ContinuousColorBalls} lineInfo - Information about the line to clear.
+     */
+    clearHorizontalLine(lineInfo) {
+        for (let i = 0; i < lineInfo.count; i++) {
+            this.grid.data[lineInfo.y][lineInfo.x + i] = 0;
         }
     }
 
-    checkDiagonalRightLines() {
-        var result = false;
-        for(var i = 0; i < this.grid.size - 4; i++) {
-            var len = this.grid.size - i;
-            var lineDiagRight = this.isDiagonalRightLine(0, i, len);
-            if(lineDiagRight.isfive()) {
-                this.clearDiagonalRightLine(lineDiagRight);
-                Utils.increaseScore(lineDiagRight.count);
-                this.score += lineDiagRight.count;
-                result = true;
+    /**
+     * Checks all rows for horizontal lines and clears them if found.
+     * @returns {boolean} True if any horizontal line was found and cleared, false otherwise.
+     */
+    checkAndClearHorizontalLines() {
+        let lineFound = false;
+        for (let rowIndex = 0; rowIndex < this.grid.size; rowIndex++) {
+            const longestLine = this.findLongestHorizontalSequence(rowIndex);
+            if (longestLine.isFiveOrMore()) {
+                this.clearHorizontalLine(longestLine);
+                Utils.increaseScore(longestLine.count);
+                this.score += longestLine.count;
+                lineFound = true;
             }
-            if(i > 0) {
-                lineDiagRight = this.isDiagonalRightLine(i, 0, len);
-                if(lineDiagRight.isfive()) {
-                    this.clearDiagonalRightLine(lineDiagRight);
-                    Utils.increaseScore(lineDiagRight.count);
-                    this.score += lineDiagRight.count;
-                    result = true;
+        }
+        return lineFound;
+    }
+
+    /**
+     * Finds the longest sequence of same-colored balls along a top-left to bottom-right diagonal.
+     * Diagonals are identified by their starting (x, y) coordinates.
+     * The length of the diagonal scan is determined by how many steps can be taken before going out of bounds.
+     * @param {number} startX - The starting x-coordinate of the diagonal.
+     * @param {number} startY - The starting y-coordinate of the diagonal.
+     * @returns {ContinuousColorBalls} The longest sequence found on this diagonal.
+     */
+    findLongestDiagonalRightSequence(startX, startY) {
+        let currentSequence = new ContinuousColorBalls(startX, startY, 0);
+        let maxSequence = new ContinuousColorBalls(startX, startY, 0);
+        // Determine how many steps can be taken along this diagonal before hitting the grid boundary.
+        const maxSteps = Math.min(this.grid.size - startX, this.grid.size - startY);
+
+        for (let step = 0; step < maxSteps; step++) {
+            const currentX = startX + step;
+            const currentY = startY + step;
+            const currentCell = this.grid.data[currentY][currentX];
+
+            if (typeof currentCell === "object") { // Cell contains a ball
+                if (currentSequence.count === 0) { // New sequence
+                    currentSequence.reset(currentX, currentY);
+                    currentSequence.count = 1;
+                } else {
+                    const previousCell = this.grid.data[currentY - 1][currentX - 1];
+                    if (typeof previousCell === "object" && currentCell.equalColour(previousCell)) {
+                        currentSequence.count++;
+                    } else { // Sequence broken
+                        maxSequence.updateIfGreater(currentSequence);
+                        currentSequence.reset(currentX, currentY);
+                        currentSequence.count = 1;
+                    }
                 }
-
+            } else { // Cell is empty
+                maxSequence.updateIfGreater(currentSequence);
+                currentSequence.reset(currentX, currentY); // Reset, count remains 0
             }
         }
-        return result;
+        maxSequence.updateIfGreater(currentSequence);
+        return maxSequence;
     }
 
+    /**
+     * Clears a diagonal line (top-left to bottom-right) from the grid.
+     * @param {ContinuousColorBalls} lineInfo - Information about the diagonal line to clear.
+     */
+    clearDiagonalRightLine(lineInfo) {
+        for (let i = 0; i < lineInfo.count; i++) {
+            this.grid.data[lineInfo.y + i][lineInfo.x + i] = 0;
+        }
+    }
+    /**
+     * Checks all possible top-left to bottom-right diagonals for lines and clears them.
+     * Diagonals are checked starting from the top edge (y=0, x varying) and then from the left edge (x=0, y varying).
+     * A line must have at least 5 balls.
+     * @returns {boolean} True if any diagonal line was found and cleared, false otherwise.
+     */
+    checkAndClearDiagonalRightLines() {
+        let lineFound = false;
+        // Iterate over all possible starting points for right diagonals.
+        // A diagonal needs at least 5 cells to form a line.
+        // Start checking diagonals from the top row (y=0), moving x from 0 up to grid.size - 5
+        for (let startX = 0; startX <= this.grid.size - 5; startX++) {
+            const longestLine = this.findLongestDiagonalRightSequence(startX, 0);
+            if (longestLine.isFiveOrMore()) {
+                this.clearDiagonalRightLine(longestLine);
+                Utils.increaseScore(longestLine.count);
+                this.score += longestLine.count;
+                lineFound = true;
+            }
+        }
+        // Start checking diagonals from the left column (x=0), moving y from 1 (y=0 already covered) up to grid.size - 5
+        for (let startY = 1; startY <= this.grid.size - 5; startY++) {
+            const longestLine = this.findLongestDiagonalRightSequence(0, startY);
+            if (longestLine.isFiveOrMore()) {
+                this.clearDiagonalRightLine(longestLine);
+                Utils.increaseScore(longestLine.count);
+                this.score += longestLine.count;
+                lineFound = true;
+            }
+        }
+        return lineFound;
+    }
+
+
+    /**
+     * Finds the longest sequence of same-colored balls along a top-right to bottom-left diagonal.
+     * @param {number} startX - The starting x-coordinate of the diagonal.
+     * @param {number} startY - The starting y-coordinate of the diagonal.
+     * @returns {ContinuousColorBalls} The longest sequence found on this diagonal.
+     */
+    findLongestDiagonalLeftSequence(startX, startY) {
+        let currentSequence = new ContinuousColorBalls(startX, startY, 0);
+        let maxSequence = new ContinuousColorBalls(startX, startY, 0);
+        // Determine how many steps can be taken: limited by startX (towards 0) and grid height (towards grid.size -1)
+        const maxSteps = Math.min(startX + 1, this.grid.size - startY);
+
+        for (let step = 0; step < maxSteps; step++) {
+            const currentX = startX - step;
+            const currentY = startY + step;
+            const currentCell = this.grid.data[currentY][currentX];
+
+            if (typeof currentCell === "object") { // Cell contains a ball
+                if (currentSequence.count === 0) { // New sequence
+                    currentSequence.reset(currentX, currentY);
+                    currentSequence.count = 1;
+                } else {
+                    // Previous cell in a top-right to bottom-left diagonal is (y-1, x+1)
+                    const previousCell = this.grid.data[currentY - 1][currentX + 1];
+                    if (typeof previousCell === "object" && currentCell.equalColour(previousCell)) {
+                        currentSequence.count++;
+                    } else { // Sequence broken
+                        maxSequence.updateIfGreater(currentSequence);
+                        currentSequence.reset(currentX, currentY);
+                        currentSequence.count = 1;
+                    }
+                }
+            } else { // Cell is empty
+                maxSequence.updateIfGreater(currentSequence);
+                currentSequence.reset(currentX, currentY);
+            }
+        }
+        maxSequence.updateIfGreater(currentSequence);
+        return maxSequence;
+    }
+
+    /**
+     * Clears a diagonal line (top-right to bottom-left) from the grid.
+     * @param {ContinuousColorBalls} lineInfo - Information about the diagonal line to clear.
+     */
+    clearDiagonalLeftLine(lineInfo) {
+        for (let i = 0; i < lineInfo.count; i++) {
+            this.grid.data[lineInfo.y + i][lineInfo.x - i] = 0;
+        }
+    }
+
+    /**
+     * Checks all possible top-right to bottom-left diagonals for lines and clears them.
+     * A line must have at least 5 balls.
+     * Diagonals are checked starting from the top edge (y=0, x varying from grid.size-1 down to 4),
+     * and then from the right edge (x=grid.size-1, y varying from 1 up to grid.size-5).
+     * The starting x for y=0 is `grid.size - 1` down to `4` because a diagonal starting at x < 4 with y=0
+     * cannot have a length of 5. Similar logic applies to starting y for x=grid.size-1.
+     * @returns {boolean} True if any diagonal line was found and cleared, false otherwise.
+     */
+    checkAndClearDiagonalLeftLines() {
+        let lineFound = false;
+        // Check diagonals starting from the top row (y=0).
+        // startX goes from grid.size-1 down to 4 (inclusive, as a line needs 5 balls).
+        // A diagonal from (startX, 0) goes to (startX-N, N). Smallest startX is 4 for a 5-ball line: (4,0) to (0,4).
+        for (let startX = this.grid.size - 1; startX >= 4; startX--) {
+            const longestLine = this.findLongestDiagonalLeftSequence(startX, 0);
+            if (longestLine.isFiveOrMore()) {
+                this.clearDiagonalLeftLine(longestLine);
+                Utils.increaseScore(longestLine.count);
+                this.score += longestLine.count;
+                lineFound = true;
+            }
+        }
+
+        // Check diagonals starting from the rightmost column (x=this.grid.size-1).
+        // startY goes from 1 (y=0 already covered) up to this.grid.size - 5.
+        // Smallest startY is 1. Largest startY is grid.size-5 for a 5-ball line: (size-1, size-5) to (size-5, size-1).
+        for (let startY = 1; startY <= this.grid.size - 5; startY++) {
+            const longestLine = this.findLongestDiagonalLeftSequence(this.grid.size - 1, startY);
+            if (longestLine.isFiveOrMore()) {
+                this.clearDiagonalLeftLine(longestLine);
+                Utils.increaseScore(longestLine.count);
+                this.score += longestLine.count;
+                lineFound = true;
+            }
+        }
+        return lineFound;
+    }
+
+    /**
+     * Scans the grid for all types of lines (horizontal, vertical, diagonals)
+     * and clears them.
+     * @returns {boolean} True if any line was found and cleared, false otherwise.
+     */
     scanLines() {
-        return this.checkHorizontalLines() || this.checkVerticalLines() || this.checkDiagonalRightLines() || this.checkDiagonalLeftLines();
+        const horizontalFound = this.checkAndClearHorizontalLines();
+        const verticalFound = this.checkAndClearVerticalLines();
+        const diagRightFound = this.checkAndClearDiagonalRightLines();
+        const diagLeftFound = this.checkAndClearDiagonalLeftLines();
+        return horizontalFound || verticalFound || diagRightFound || diagLeftFound;
     }
 }
