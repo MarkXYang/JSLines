@@ -1,13 +1,40 @@
+/**
+ * Utility functions for the game.
+ * @namespace Utils
+ */
 var Utils = {
+    /**
+     * Random number generation functions.
+     * @namespace Utils.Random
+     */
     Random: {
+        /**
+         * Generates a random integer within a specified range.
+         * @param {number} min - The minimum value (inclusive).
+         * @param {number} max - The maximum value (exclusive).
+         * @returns {number} A random integer.
+         */
         nextInt(min, max) {
             return Math.floor(Math.random() * max) + min;
         }
     },
+    /**
+     * Game settings.
+     * @namespace Utils.settings
+     */
     settings: {
+        /**
+         * Available ball colours.
+         * @type {string[]}
+         */
         colours: ["red", "blue", "yellow", "green", "brown"]
         //colours: ["red", "blue", "yellow", "green", "purple", "turquoise", "pink", "brown"]
     },
+    /**
+     * Creates an empty grid of a given size.
+     * @param {number} size - The size of the grid (width and height).
+     * @returns {Array<Array<number>>} A 2D array representing the grid, initialized with zeros.
+     */
     makeGrid: size => {
         var grid = [];
         for (var i = 0; i < size; i++) {
@@ -19,24 +46,10 @@ var Utils = {
         }
         return grid;
     },
-    /*
-    showPath: path => {
-        for (var x = 0; x < path.length; x++) {
-            $(`.element[data-x=${path[x].x}][data-y=${path[x].y}]`).addClass("path");
-        }
-    },
-    */
-    moveBall: (ball, path) => {
-        var ball = $("");
-        for (var i = 0; i < path.length; i++) {
-            $(`.element[data-x=${path[x].x}][data-y=${path[x].y}]`);
-        }
-    },
-    /*
-    clearPath: () => {
-        $(".element").removeClass("path");
-    },
-    */
+    /**
+     * Increases the player's score.
+     * @param {number} num - The amount to increase the score by.
+     */
     increaseScore: (num) => {
         var score = parseInt($('#score').text());
         score += num;
