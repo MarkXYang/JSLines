@@ -12,21 +12,38 @@ pub struct Game {
     pub score: u32,
     pub upcoming_balls: Vec<BallColor>,
     // pub selected_ball_coords: Option<(usize, usize)>,
+    pub solver: Solver,
+
+    pub game_over: bool,
 }
 impl Game {
+    pub fn new(grid_size: usize) -> Self {
+        let grid = Grid::new(grid_size);
+        let solver = Solver::new(grid);
+        Self { grid, solver, score: 0, upcoming_balls: Vec::new(), game_over: false }
+    }
+    pub fn initialize_game(&mut self) {
+        self.place_random_balls(10);
+        self.generate_upcoming_balls();
+    }
     // new, initialize_game, generate_upcoming_balls
+    pub fn generate_upcoming_balls(&mut self) {
+        self.upcoming_balls = vec![BallColor::random_color(); 3];
+    }
 
     pub fn place_random_balls(&mut self, count: usize) {
-        // Loop `count` times:
-        //  color = BallColor::random_color()
-        //  self.grid.place_ball_at_random_empty(color) - handle potential error
+        for _ in 0..count {
+            let color = BallColor::random_color();
+            self.grid.place_ball_at_random_empty(color).unwrap();
+        }
     }
 
     pub fn place_upcoming_balls_on_grid(&mut self) -> Result<(), &'static str> {
-        // For color in self.upcoming_balls.iter():
-        //  self.grid.place_ball_at_random_empty(color.clone()) - handle error, break if grid full
-        // self.generate_upcoming_balls(); // Generate NEW set for next turn
-        // Return Ok or Err if grid became full
+        for color in self.upcoming_balls.iter() {
+            self.grid.place_ball_at_random_empty(color.clone()).unwrap();
+        }
+        self.generate_upcoming_balls();
+        Ok(())
     }
 
     pub fn handle_move(&mut self, start_coords: (usize, usize), end_coords: (usize, usize)) -> Result<(), &'static str> {
@@ -41,7 +58,30 @@ impl Game {
         //    - new_lines = Solver::scan_and_collect_lines_to_clear(...)
         //    - If new_lines not empty, clear them and score.
         // Return Ok or Err (no path, grid full)
+        let path = self.solver.find_path(start_coords, end_coords);
+        if path.is_some() {
+            self.grid.move_ball_on_grid(start_coords, end_coords).unwrap();
+        }
+        let lines = self.solver.scan_and_collect_lines_to_clear();
+        if lines.is_empty() {
+            self.place_upcoming_balls_on_grid().unwrap();
+        }  
+        let new_lines = self.solver.scan_and_collect_lines_to_clear();
+        if !new_lines.is_empty() {
+            self.grid.clear_balls(&new_lines);
+            self.score += new_lines.len() as u32;
+        }
+        if self.is_grid_full() {
+            self.game_over = true;
+        }
+        if self.game_over {
+            Err("Game over")
+        } else {
+            Ok(())
+        }
     }
 
-    pub fn is_grid_full(&self) -> bool { /* ... check all cells ... */ }
+    pub fn is_grid_full(&self) -> bool { 
+        self.grid.cells.iter().all(|row| row.iter().all(|cell| cell.is_some()))
+    }
 }

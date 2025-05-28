@@ -1,18 +1,37 @@
+use rand::Rng;
+use crate::grid::Grid;
+use crate::solver::BallSequence;
+
+/**
+ * Ball is a struct that represents a ball on the grid.
+ * It has an id and a color.
+ */
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BallColor {
     Red, Blue, Yellow, Green, Brown,
 }
 
+/**
+ * Ball is a struct that represents a ball on the grid.
+ * It has an id and a color.
+ */ 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ball {
     pub id: u32,
     pub color: BallColor,
 }
 
-impl Ball { /* ... new ... */ }
-impl BallColor { /* ... random_color (needs rand crate) ... */ }
-grid.rs Proposal:
+impl Ball { 
+    pub fn new(id: u32, color: BallColor) -> Self {
+        Self { id, color }
+    }
+}
 
+impl BallColor { 
+    pub fn random_color() -> Self {
+        let colors = vec![BallColor::Red, BallColor::Blue, BallColor::Yellow, BallColor::Green, BallColor::Brown];
+        colors[rand::thread_rng().gen_range(0..colors.len())]
+    }
 use crate::ball::Ball;
 pub struct Grid {
     pub size: usize,
@@ -21,8 +40,49 @@ pub struct Grid {
 }
 
 impl Grid {
-    pub fn new(size: usize) -> Self { /* ... */ }
-    pub fn place_ball(&mut self, ...) -> Result<(), &'static str> { /* ... */ }
-    pub fn get_cell(&self, ...) -> Option<&Ball> { /* ... */ }
-    pub fn is_empty(&self, ...) -> bool { /* ... */ }
+    pub fn new(size: usize) -> Self { 
+        Self { 
+            size, 
+            cells: vec![vec![None; size]; size], 
+            ball_count: 0 
+        }
+    }
+    pub fn place_ball(&mut self, ...) -> Result<(), &'static str> { 
+        Self { 
+    }
+    pub fn get_cell(&self, ...) -> Option<&Ball> { 
+        Self { 
+            size, 
+            cells: vec![vec![None; size]; size], 
+            ball_count: 0 
+        }
+    }
+    pub fn is_empty(&self, ...) ->  bool { 
+        Self { 
+            size, 
+            cells: vec![vec![None; size]; size], 
+            ball_count: 0 
+        }
+    }
+    pub fn is_within_bounds(&self, ...) -> bool { 
+        Self { 
+            size, 
+            cells: vec![vec![None; size]; size], 
+            ball_count: 0 
+        }
+    }
+    pub fn is_valid_move(&self, ...) -> bool { 
+        Self { 
+            size, 
+            cells: vec![vec![None; size]; size], 
+            ball_count: 0 
+        }
+    }
+    pub fn get_neighbors(&self, ...) -> Vec<Option<&Ball>> { 
+        Self { 
+            size, 
+            cells: vec![vec![None; size]; size], 
+            ball_count: 0 
+        }
+    }
 }
