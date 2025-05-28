@@ -1,0 +1,10 @@
+# Rust / Cargo build artifacts
+target/
+
+# IDE specific
+.idea/
+.vscode/
+
+# OS specific
+.DS_Store
+Thumbs.db

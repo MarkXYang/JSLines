@@ -1,11 +1,12 @@
 use gtk4 as gtk;
 use gtk::prelude::*;
-use glib;
+use glib; // Use direct glib import
 use gtk::cairo;
 use gtk::MessageDialog; // Import MessageDialog
-use std::cell::{RefCell, Rc};
+use std::rc::Rc; // Corrected Rc import
+use std::cell::RefCell; // Separate RefCell import
 use crate::game::Game;
-use crate::ball::{Ball, BallColor}; // Assuming Ball might be needed, BallColor definitely is.
+use crate::ball::{Ball, BallColor};
 
 // Helper function to convert BallColor to RGB
 fn ball_color_to_rgb(ball_color: BallColor) -> (f64, f64, f64) {
@@ -21,19 +22,20 @@ fn ball_color_to_rgb(ball_color: BallColor) -> (f64, f64, f64) {
 
 mod imp {
     use super::*;
-    use glib::subclass::InitializingObject;
-    use gtk::subclass::prelude::*;
+    // use glib::subclass::InitializingObject; // Appears unused
+    use glib::subclass::prelude::*; // Use direct glib import
     use std::cell::OnceCell; // For properties
     use gtk::Window; // For type casting parent window
+    use glib; // For glib::Properties derive and other glib items
 
-    #[glib::Properties]
-    #[derive(Default)]
+    #[derive(glib::Properties, Default)] // Use direct glib::Properties
+    #[properties(wrapper_type = super::GameBoardWidget)]
     pub struct GameBoardWidget {
-        #[property(get, set, construct_only)]
+        #[property(get, set, construct_only, type = Option<Rc<RefCell<Game>>>)]
         game: OnceCell<Rc<RefCell<Game>>>,
     }
 
-    #[glib::object_subclass]
+    #[glib::object_subclass] // Use direct glib::object_subclass
     impl ObjectSubclass for GameBoardWidget {
         const NAME: &'static str = "FiveBallsGameBoardWidget";
         type Type = super::GameBoardWidget;
@@ -47,15 +49,15 @@ mod imp {
     }
 
     impl ObjectImpl for GameBoardWidget {
-        fn properties() -> &'static [glib::ParamSpec] {
+        fn properties() -> &'static [glib::ParamSpec] { // Use direct glib::ParamSpec
             Self::derived_properties()
         }
 
-        fn set_property(&self, id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
+        fn set_property(&self, id: usize, value: &glib::Value, pspec: &glib::ParamSpec) { // Use direct glib::Value, glib::ParamSpec
             Self::derived_set_property(self, id, value, pspec)
         }
 
-        fn property(&self, id: usize, pspec: &glib::ParamSpec) -> glib::Value {
+        fn property(&self, id: usize, pspec: &glib::ParamSpec) -> glib::Value { // Use direct glib::Value, glib::ParamSpec
             Self::derived_property(self, id, pspec)
         }
 
@@ -132,7 +134,8 @@ mod imp {
     impl WidgetImpl for GameBoardWidget {}
 
     impl DrawingAreaImpl for GameBoardWidget {
-        fn draw(&self, _drawing_area: &Self::Type, cr: &cairo::Context, width: i32, height: i32) {
+        // Corrected signature for draw method
+        fn draw(&self, cr: &gtk::cairo::Context, width: i32, height: i32) {
             // Background
             cr.set_source_rgb(0.95, 0.95, 0.95); // Light gray
             cr.paint().expect("Failed to paint background");
@@ -223,7 +226,7 @@ mod imp {
     }
 }
 
-glib::wrapper! {
+glib::wrapper! { // Use direct glib::wrapper
     pub struct GameBoardWidget(ObjectSubclass<imp::GameBoardWidget>)
         @extends gtk::Widget, gtk::DrawingArea;
 }
